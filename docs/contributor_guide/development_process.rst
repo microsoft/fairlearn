@@ -204,7 +204,7 @@ Follow the steps below to create a pull request.
         Please fill it up! If you created the pull request in response to an issue add :code:`#<issue-number>` for reference.
       * If the PR introduces something that will affect the users, please add a changelog entry in the :code:`docs/user_guide/installation_and_version_guide` directory.
 
-#. Celebration time! We would like to encourage you to become a part of our Fairlearn community. To do so, join our communication channels: :ref:`communication`.
+#. Celebration time! We would like to encourage you to become a part of our Fairlearn community. To do so, join our communication channels: :ref:`communication`. Please respect our `Code of Conduct <https://github.com/fairlearn/governance/blob/main/code-of-conduct.md>`_.
 
 Investigating automated test failures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
