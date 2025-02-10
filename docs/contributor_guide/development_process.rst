@@ -35,7 +35,9 @@ changing all the docstrings in one PR.
 
 Installation instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-You will need a GitHub account to contribute to this project. Authenticating with Github using an ssh connection is highly recommended. You can learn more about it `here <https://docs.github.com/en/get-started/onboarding/getting-started-with-your-github-account>`_.
+You will need a GitHub account to contribute to this project. Authenticating with Github
+using an ssh connection is highly recommended. You can learn more about it
+`here <https://docs.github.com/en/get-started/onboarding/getting-started-with-your-github-account>`_.
 
 First, clone the repository locally via:
 
@@ -46,30 +48,25 @@ First, clone the repository locally via:
 
 (Optional) Set up a virtual environment:
 
-   While you can use :code:`pip` to install the fairlearn package globally, we strongly recommend developing using a virtual environment. Virtual environments are a great way to isolate project dependencies, especially if you're working on multiple issues that require different versions of the package.
+   While you can use :code:`pip` to install the fairlearn package globally, we strongly
+   recommend developing using a virtual environment. Virtual environments are a great way
+   to isolate project dependencies, especially if you're working on multiple issues that
+   require different versions of the package.
 
-   Create a Python virtual environment using :code:`conda`:
+   To create a Python virtual environment using :code:`conda`, make your virtual environment
+   inside the fairlearn project directory. This will create a new :code:`fairlearn` folder
+   and seed it with a :code:`python=3.12` environment. Then activate the virtual environment:
 
-         #. Make your virtual environment inside the fairlearn project directory. This will create a new :code:`venv` folder and seed it with a Python 3 environment. Then activate the virtual environment:
+   .. prompt:: bash
 
+      conda create --name fairlearn python=3.12  # creates virtual env
+      conda activate fairlearn # activates virtual env
+      (fairlearn) $ # notice the shell prompt includes name of active virtual env
 
-            .. code-block:: bash
-
-               $ conda create --name fairlearn python=3.12  # creates virtual environment
-               $ conda activate myenv # activates virtual environment
-               (venv) $ # notice the shell prompt includes name of active virtual environment
-
-         #. Check if your virtual environment is indeed active. Then proceed to installing the package dependencies:
-
-            .. code-block:: bash
-
-               (venv) $ which python #confirm virtual environment is active
-               (venv) $ conda deactivate #use to deactivate if needed
-
-If you are using a virtual environment(highly recommended), make sure it is activated before you execute the next steps.
+   If you see the name of the environment in the shell prompt,
+   then the virtual environment is activated. To deactivate it, run: :code:`conda deactivate`.
 
 To install in editable mode, from the repository root path run:
-
 
 .. prompt:: bash
 
@@ -100,11 +97,11 @@ The Requirements Files
 
 The prerequisites for Fairlearn are split between three separate files:
 
-    -  `requirements.txt <https://github.com/fairlearn/fairlearn/blob/main/requirements.txt>`_
-       contains the prerequisites for the core Fairlearn package
+* `requirements.txt <https://github.com/fairlearn/fairlearn/blob/main/requirements.txt>`_
+  contains the prerequisites for the core Fairlearn package
 
-    -  `requirements-dev.txt <https://github.com/fairlearn/fairlearn/blob/main/requirements-dev.txt>`_ contains
-       the prerequisites for Fairlearn development (such as :code:`ruff` and :code:`pytest`)
+* `requirements-dev.txt <https://github.com/fairlearn/fairlearn/blob/main/requirements-dev.txt>`_ contains
+  the prerequisites for Fairlearn development (such as :code:`ruff` and :code:`pytest`)
 
 The `requirements.txt <https://github.com/fairlearn/fairlearn/blob/main/requirements.txt>`_
 file is consumed
@@ -127,13 +124,19 @@ Follow the steps below to create a pull request.
 
 #. Install `GIT <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_.
 
-#. Look at Fairlearn's issues on GitHub, specifically the ones marked `"help wanted" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22>`_. Within this category we've marked issues with labels:
+#. Look at Fairlearn's issues on GitHub, specifically the ones marked
+   `"help wanted" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22>`_.
+   Within this category we've marked issues with labels:
 
-   * `"good first issue" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22+label%3A%22good+first+issue%22>`_: issues suitable for first time contributors, including people with no prior experience with coding or GitHub. This is an excellent way to get started!
+   * `"good first issue" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22+label%3A%22good+first+issue%22>`_:
+     Issues suitable for first time contributors, including people with no prior experience with coding or GitHub.
+     This is an excellent way to get started!
 
-   * `"easy" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22+label%3A%22easy%22+>`_: issues suitable for folks with at least a bit of experience and/or able to allocate some time to look for a solution.
+   * `"easy" <https://github.com/fairlearn/fairlearn/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22+label%3A%22easy%22>`_:
+     Issues suitable for folks with at least a bit of experience and/or able to allocate some time to look for a solution.
 
-   *  Neither of the two above: issues that are demanding or awaiting scope. Likely to take more than a day or two.
+   *  Neither of the two above:
+      issues that are demanding or awaiting scope. Likely to take more than a day or two.
       If you think this is something for you, please:
 
       * Identify an issue that you would like to work on.
@@ -196,13 +199,12 @@ Follow the steps below to create a pull request.
 
    * `Create a branch <https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project#creating-a-branch-to-work-on>`_.
    * `Commit and push changes <https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project#making-and-pushing-changes>`_.
-   * `Make a pull request <https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project#making-a-pull-request>`_.
+   * `Open a pull request <https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project#making-a-pull-request>`_.
+
 
       * Build the website following the guidelines in :ref:`contributing_documentation` and run the tests if necessary.
-
       * Opening a pull request comes with filling up an already provided description template.
         Please fill it up! If you created the pull request in response to an issue add :code:`#<issue-number>` for reference.
-      * If the PR introduces something that will affect the users, please add a changelog entry in the :code:`docs/user_guide/installation_and_version_guide` directory.
 
 #. Celebration time! We would like to encourage you to become a part of our Fairlearn community. To do so, join our communication channels: :ref:`communication`.
 

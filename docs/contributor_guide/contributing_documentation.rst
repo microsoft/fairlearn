@@ -99,16 +99,19 @@ Citations
 ^^^^^^^^^
 
 Citations are built using the `sphinxcontrib-bibtex <https://pypi.org/project/sphinxcontrib-bibtex/>`_
-extension. This allows us to use the `refs.bib <https://github.com/fairlearn/fairlearn/blob/main/docs/refs.bib>`_ BibTeX file to generate our citations.
+extension. This allows us to use the `refs.bib <https://github.com/fairlearn/fairlearn/blob/main/docs/refs.bib>`_
+BibTeX file to generate our citations.
 
 To add a citation:
 
-1. Check if your required BibTex entry already exists in the
-   `docs/refs.bib <https://github.com/fairlearn/fairlearn/blob/main/docs/refs.bib>`_ file. If not, simply paste your entry at the end.
+1. Check if your required BibTeX entry already exists in the
+   `docs/refs.bib <https://github.com/fairlearn/fairlearn/blob/main/docs/refs.bib>`_ file.
+   If not, simply paste your entry at the end.
 2. Change your bibtex id to the format ``<author-last-name><4digit-year><keyword>``.
 3. Use the :code:`:footcite:`bibtex-id`` role to create an inline citation rendered as :code:`[CitationNumber]`.
    For example, :code:`:footcite:`agarwal2018reductions`` will be rendered as :footcite:`agarwal2018reductions`.
-4. You can also use :code:`:footcite:t:`bibtex-id`` to create a textual citation. The role :code:`:footcite:t:`agarwal2018reductions`` will be rendered as :footcite:t:`agarwal2018reductions`.
+4. You can also use :code:`:footcite:t:`bibtex-id`` to create a textual citation.
+   The role :code:`:footcite:t:`agarwal2018reductions`` will be rendered as :footcite:t:`agarwal2018reductions`.
 5. To add the bibliography use :code:`.. footbibliography::` directive at the bottom of your file if not already present.
    This will list all the citations for the current document.
 
