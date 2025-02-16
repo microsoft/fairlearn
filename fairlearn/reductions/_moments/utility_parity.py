@@ -1,5 +1,8 @@
 # Copyright (c) Microsoft Corporation and Fairlearn contributors.
 # Licensed under the MIT License.
+from __future__ import annotations
+
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -23,15 +26,13 @@ _CTRL_EVENT_FORMAT = "control={0},{1}"
 def _combine_event_and_control(event: str, control: str) -> str:
     if pd.notnull(control):
         return _CTRL_EVENT_FORMAT.format(control, event)
-    else:
-        return event
+    return event
 
 
-def _merge_event_and_control_columns(event_col, control_col):
+def _merge_event_and_control_columns(event_col: pd.Series, control_col) -> pd.Series:
     if control_col is None:
         return event_col
-    else:
-        return event_col.combine(control_col, _combine_event_and_control)
+    return event_col.combine(control_col, _combine_event_and_control)
 
 
 class UtilityParity(ClassificationMoment):
@@ -68,14 +69,14 @@ class UtilityParity(ClassificationMoment):
 
     Parameters
     ----------
-    difference_bound : float
+    difference_bound : float | None
         The constraints' difference bound for constraints that are expressed
         as differences, also referred to as :math:`\\epsilon` in documentation.
         If `ratio_bound` is used then `difference_bound` needs to be None.
         If neither `ratio_bound` nor `difference_bound` are set then a default
         difference bound of 0.01 is used for backwards compatibility.
         Default None.
-    ratio_bound : float
+    ratio_bound : float | None
         The constraints' ratio bound for constraints that are expressed as
         ratios. The specified value needs to be in (0,1].
         If `difference_bound` is used then `ratio_bound` needs to be None.
@@ -88,7 +89,13 @@ class UtilityParity(ClassificationMoment):
         Default 0.0
     """
 
-    def __init__(self, *, difference_bound=None, ratio_bound=None, ratio_bound_slack=0.0):
+    def __init__(
+        self,
+        *,
+        difference_bound: float | None = None,
+        ratio_bound: float | None = None,
+        ratio_bound_slack: float = 0.0,
+    ):
         """Initialize with the ratio value."""
         super(UtilityParity, self).__init__()
         if (difference_bound is None) and (ratio_bound is None):
@@ -106,7 +113,12 @@ class UtilityParity(ClassificationMoment):
             # both difference_bound and ratio_bound specified
             raise ValueError(_MESSAGE_INVALID_BOUNDS)
 
-    def default_objective(self):
+    @property
+    def index(self) -> pd.MultiIndex:
+        """Return the multi-index listing the constraints."""
+        return self._index
+
+    def default_objective(self) -> ErrorRate:
         """Return the default objective for moments of this kind."""
         return ErrorRate()
 
@@ -116,9 +128,9 @@ class UtilityParity(ClassificationMoment):
         y: pd.Series,
         *,
         sensitive_features: pd.Series,
-        event: pd.Series = None,
+        event: pd.Series | None = None,
         utilities=None,
-    ):
+    ) -> None:
         """Load the specified data into this object.
 
         This adds a column `event` to the `tags` field.
@@ -151,7 +163,7 @@ class UtilityParity(ClassificationMoment):
             keys=["+", "-"],
             names=[_SIGN, _EVENT, _GROUP_ID],
         )
-        self.index = signed.index
+        self._index = signed.index
         self.default_objective_lambda_vec = None
 
         # Fill information about the matrix U, which is used to calculate signed weights
@@ -191,7 +203,6 @@ class UtilityParity(ClassificationMoment):
         # Considering fewer constraints is not required for correctness, but it can dramatically
         # speed up GridSearch.
         self.neg_basis_present = pd.Series(dtype="float64")
-        # zero_vec = pd.Series(0.0, self.index)
         col_count = len(event_vals) * (len(group_vals) - 1)
         self.pos_basis = pd.DataFrame(0.0, index=self.index, columns=range(col_count)).sort_index()
         self.neg_basis = pd.DataFrame(0.0, index=self.index, columns=range(col_count)).sort_index()
@@ -209,7 +220,7 @@ class UtilityParity(ClassificationMoment):
                 self.neg_basis_present.at[i] = True
                 i += 1
 
-    def gamma(self, predictor):
+    def gamma(self, predictor: Callable) -> pd.Series:
         """Calculate the degree to which constraints are currently violated by the predictor."""
         predictions = predictor(self.X)
         if isinstance(predictions, np.ndarray):
@@ -220,7 +231,7 @@ class UtilityParity(ClassificationMoment):
         self._gamma_descr = str(g_signed)
         return g_signed
 
-    def bound(self):
+    def bound(self) -> pd.Series:
         """Return bound vector.
 
         Returns
@@ -232,7 +243,7 @@ class UtilityParity(ClassificationMoment):
         return pd.Series(self.eps, index=self.index)
 
     # TODO: this can be further improved using the overcompleteness in group membership
-    def project_lambda(self, lambda_vec):
+    def project_lambda(self, lambda_vec: pd.Series) -> pd.Series:
         """Return the projected lambda values.
 
         i.e., returns lambda which is guaranteed to lead to the same or higher value of the
@@ -251,7 +262,7 @@ class UtilityParity(ClassificationMoment):
             return lambda_projected
         return lambda_vec
 
-    def signed_weights(self, lambda_vec):
+    def signed_weights(self, lambda_vec: pd.Series) -> pd.Series:
         """Compute the signed weights.
 
         Uses the equations for :math:`C_i^0` and :math:`C_i^1` as defined
@@ -306,7 +317,7 @@ class DemographicParity(UtilityParity):
 
     short_name = "DemographicParity"
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
+    def load_data(self, X, y, *, sensitive_features, control_features=None) -> None:
         """Load the specified data into the object."""
         _, y_train, sf_train, cf_train = _validate_and_reformat_input(
             X,
@@ -362,7 +373,7 @@ class TruePositiveRateParity(UtilityParity):
 
     short_name = "TruePositiveRateParity"
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
+    def load_data(self, X, y, *, sensitive_features, control_features=None) -> None:
         """Load the specified data into the object."""
         _, y_train, sf_train, cf_train = _validate_and_reformat_input(
             X,
@@ -413,7 +424,7 @@ class FalsePositiveRateParity(UtilityParity):
 
     short_name = "FalsePositiveRateParity"
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
+    def load_data(self, X, y, *, sensitive_features, control_features=None) -> None:
         """Load the specified data into the object."""
         _, y_train, sf_train, cf_train = _validate_and_reformat_input(
             X,
@@ -463,7 +474,7 @@ class EqualizedOdds(UtilityParity):
 
     short_name = "EqualizedOdds"
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
+    def load_data(self, X, y, *, sensitive_features, control_features=None) -> None:
         """Load the specified data into the object."""
         _, y_train, sf_train, cf_train = _validate_and_reformat_input(
             X,
@@ -508,7 +519,7 @@ class ErrorRateParity(UtilityParity):
 
     short_name = "ErrorRateParity"
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
+    def load_data(self, X, y, *, sensitive_features, control_features=None) -> None:
         """Load the specified data into the object."""
         _, y_train, sf_train, cf_train = _validate_and_reformat_input(
             X,

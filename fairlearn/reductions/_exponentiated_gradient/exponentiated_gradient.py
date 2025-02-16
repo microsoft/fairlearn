@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation and Fairlearn contributors.
 # Licensed under the MIT License.
+from __future__ import annotations
 
 import logging
 
@@ -10,6 +11,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
 from fairlearn.reductions._moments import ClassificationMoment
+from fairlearn.reductions._moments.moment import Moment
 
 from ._constants import (
     _ACCURACY_MUL,
@@ -52,7 +54,7 @@ class ExponentiatedGradient(BaseEstimator, MetaEstimatorMixin):
         In regression values `y` and predictions are continuous.
     constraints : fairlearn.reductions.Moment
         The fairness constraints expressed as a :class:`~Moment`.
-    objective : fairlearn.reductions.Moment
+    objective : fairlearn.reductions.Moment | None
         The objective expressed as a :class:`~Moment`. The default is
         :code:`ErrorRate()` for binary classification and
         :code:`MeanLoss(...)` for regression.
@@ -71,7 +73,7 @@ class ExponentiatedGradient(BaseEstimator, MetaEstimatorMixin):
         .. versionadded:: 0.5.0
             Used to be :code:`T`
 
-    nu : float
+    nu : float | None
         Convergence threshold for the duality gap, corresponding to a
         conservative automatic setting based on the statistical uncertainty
         in measuring classification error
@@ -104,15 +106,15 @@ class ExponentiatedGradient(BaseEstimator, MetaEstimatorMixin):
     def __init__(
         self,
         estimator,
-        constraints,
+        constraints: Moment,
         *,
-        objective=None,
-        eps=0.01,
-        max_iter=50,
-        nu=None,
-        eta0=2.0,
-        run_linprog_step=True,
-        sample_weight_name="sample_weight",
+        objective: Moment | None = None,
+        eps: float = 0.01,
+        max_iter: int = 50,
+        nu: float | None = None,
+        eta0: float = 2.0,
+        run_linprog_step: bool = True,
+        sample_weight_name: str = "sample_weight",
     ):  # noqa: D103
         self.estimator = estimator
         self.constraints = constraints
@@ -136,7 +138,6 @@ class ExponentiatedGradient(BaseEstimator, MetaEstimatorMixin):
         """
         self.lambda_vecs_EG_ = pd.DataFrame()
         self.lambda_vecs_LP_ = pd.DataFrame()
-        self.lambda_vecs_ = pd.DataFrame()
 
         logger.debug("...Exponentiated Gradient STARTING")
 
@@ -153,10 +154,19 @@ class ExponentiatedGradient(BaseEstimator, MetaEstimatorMixin):
         )
 
         theta = pd.Series(0, lagrangian.constraints.index)
+
+        # Stores the weights of the best-response estimators without LP and before averaging
         Qsum = pd.Series(dtype="float64")
-        gaps_EG = []
-        gaps = []
-        Qs = []
+
+        # Stores the duality gap of the Exponentiated Gradient (EG) at each iteration
+        gaps_EG: list[float] = []
+
+        # Stores the best gap at each iteration among the ones EG and Linear Programming (LP) yield
+        gaps: list[float] = []
+
+        # Stores the best-reponse estimators' weights at each iteration
+        # The appended weights come either from (EG) or (LP), depending on their respective gaps
+        Qs: list[pd.Series] = []
 
         last_regret_checked = _REGRET_CHECK_START_T
         last_gap = np.inf

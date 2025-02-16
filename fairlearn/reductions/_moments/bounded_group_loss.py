@@ -1,5 +1,8 @@
 # Copyright (c) Microsoft Corporation and Fairlearn contributors.
 # Licensed under the MIT License.
+from __future__ import annotations
+
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -19,7 +22,7 @@ class ConditionalLossMoment(LossMoment):
     loss : {SquareLoss, AbsoluteLoss}
         A loss object with an `eval` method, e.g. `SquareLoss` or
         `AbsoluteLoss`.
-    upper_bound : float
+    upper_bound : float | None
         An upper bound on the loss, also referred to as :math:`\\zeta`;
         `upper_bound` is an optional argument that is not always
         required; default None
@@ -28,18 +31,23 @@ class ConditionalLossMoment(LossMoment):
         default False, i.e., group-level losses are the default behavior
     """
 
-    def __init__(self, loss, *, upper_bound=None, no_groups=False):
+    def __init__(self, loss, *, upper_bound: float | None = None, no_groups: bool = False):
         super().__init__(loss)
         self.upper_bound = upper_bound
         self.no_groups = no_groups
 
-    def default_objective(self):
+    @property
+    def index(self) -> pd.Index:
+        """Return the index listing the constraints."""
+        return self._index
+
+    def default_objective(self) -> MeanLoss:
         """Return a default objective."""
         return MeanLoss(self.reduction_loss)
 
-    def load_data(self, X, y, *, sensitive_features):
+    def load_data(self, X, y, *, sensitive_features) -> None:
         """Load data into the moment object."""
-        X_train, y_train, sf_train, _ = _validate_and_reformat_input(
+        _, y_train, sf_train, _ = _validate_and_reformat_input(
             X, y, enforce_binary_labels=False, sensitive_features=sensitive_features
         )
         if self.no_groups:
@@ -48,7 +56,7 @@ class ConditionalLossMoment(LossMoment):
         # The following uses X and not X_train so that the estimators get X untouched
         super().load_data(X, y_train, sensitive_features=sf_train)
         self.prob_attr = self.tags.groupby(_GROUP_ID).size() / self.total_samples
-        self.index = self.prob_attr.index
+        self._index = self.prob_attr.index
         self.default_objective_lambda_vec = self.prob_attr
 
         # fill in the information about the basis
@@ -65,7 +73,7 @@ class ConditionalLossMoment(LossMoment):
             self.neg_basis_present.at[i] = False
             i += 1
 
-    def gamma(self, predictor):
+    def gamma(self, predictor: Callable) -> pd.Series:
         """Calculate the degree to which constraints are currently violated by the predictor."""
         self.tags[_PREDICTION] = predictor(self.X)
         self.tags[_LOSS] = self.reduction_loss.eval(self.tags[_LABEL], self.tags[_PREDICTION])
@@ -73,7 +81,7 @@ class ConditionalLossMoment(LossMoment):
         self._gamma_descr = str(expect_attr[[_LOSS]])
         return expect_attr[_LOSS]
 
-    def bound(self):
+    def bound(self) -> pd.Series:
         """Return the vector of bounds.
 
         Returns
@@ -85,11 +93,11 @@ class ConditionalLossMoment(LossMoment):
             raise ValueError("No Upper Bound")
         return pd.Series(self.upper_bound, index=self.index)
 
-    def project_lambda(self, lambda_vec):
+    def project_lambda(self, lambda_vec: pd.Series) -> pd.Series:
         """Return the lambda values."""
         return lambda_vec
 
-    def signed_weights(self, lambda_vec=None):
+    def signed_weights(self, lambda_vec: pd.Series | None = None) -> pd.Series:
         """Return the signed weights."""
         if lambda_vec is None:
             adjust = pd.Series(1.0, index=self.index)
