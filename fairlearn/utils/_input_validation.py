@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation and Fairlearn contributors.
 # Licensed under the MIT License.
 
+import inspect
 import logging
 
 import numpy as np
@@ -171,3 +172,10 @@ def _merge_columns(feature_columns: np.ndarray) -> np.ndarray:
         )
         .values
     )
+
+
+def _filter_kwargs(func, kwargs):
+    """Helper function to filter out kwargs that are not accepted by `func`."""
+    sig = inspect.signature(func)
+    valid_params = set(sig.parameters.keys())
+    return {k: v for k, v in kwargs.items() if k in valid_params}
