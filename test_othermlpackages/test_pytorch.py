@@ -90,10 +90,6 @@ def _should_skip_test():
     return parse(sklearn.__version__) >= parse("1.6.0")
 
 
-@pytest.mark.skipif(
-    _should_skip_test(),
-    reason="Skipped because of scikit-learn >= 1.6. Will be enabled again when the issues in the external library are fixed.",
-)
 def test_examples():
     af.test_examples()
 
