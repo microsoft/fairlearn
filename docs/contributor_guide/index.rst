@@ -47,4 +47,5 @@ All are welcome! Please reach out via
 `Discord <https://discord.gg/R22yCfgsRn>`_ and we will forward the
 invitation to you.
 We keep notes from each meeting in our
-`HackMD <https://hackmd.io/QcJ8WBAbQTq6iOgoi0JT4g>`_.
+`HackMD <https://hackmd.io/@Pu3O7yQTSFivjWn2cXCgFg/BkxG0KgrJl>`_.
+`Old HackMD <https://hackmd.io/QcJ8WBAbQTq6iOgoi0JT4g>
