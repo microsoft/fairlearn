@@ -9,6 +9,7 @@ v0.13.0
 
 Other improvements
 ------------------
+* Allowed relaxed constraints (except :code:`equalized_odds`) in :code:`ThresholdOptimizer`: :pr:`1453` by :user:`Tahar Allouche <taharallouche>`
 * Vectorized the curve interpolation step in :code:`ThresholdOptimizer` to improve performance and readability: :pr:`1448` by :user:`Tahar Allouche <taharallouche>`.
 * Allowed multi-dimensional input data :code:`X` (:code:`ndims > 2`) in :code:`ThresholdOptimizer` and :code:`ExponentiatedGradient`: :pr:`1470` by :user:`Tahar Allouche <taharallouche>`.
 * Removed support for python 3.8 and added support for python 3.12: :pr:`1488` by :user:`Tamara Atanasoska <tamaraatanasoska>`.
