@@ -139,3 +139,100 @@ we would expect with :math:`\alpha=0.5`.
 .. figure:: ../../auto_examples/images/sphx_glr_plot_correlationremover_before_after_003.png
     :align: center
     :target: ../../auto_examples/plot_correlationremover_before_after.html
+
+
+.. _prototyped_representer:
+
+Prototyped Representer
+---------------------------
+
+:class:`~fairlearn.preprocessing.PrototypedRepresenter` is a preprocessing algorithm and
+a classifier that aims to learn a latent representation of the data that minimizes reconstruction
+error, while simultaneously obfuscating information about sensitive features. It was introduced in
+Zemel et al. (2013) :footcite:`pmlr-v28-zemel13`.
+
+The latent representation consists of :math:`K` prototype vectors
+:math:`\mathbf{v}_1, \dots, \mathbf{v}_K \in \mathbb{R}^d`, where :math:`d` is the dimension
+of the input data, and a stochastic transformation matrix :math:`\mathbf{M} \in \mathbb{R}^{n \times k}`
+that maps the input data :math:`\mathbf{X} \in \mathbb{R}^{n \times d}` to the latent representation.
+Each entry :math:`M_{nk}` is the softmax of the distances of the sample :math:`n` to the prototype
+vectors:
+
+.. math::
+
+    M_{nk} = \frac{\exp(-d(\mathbf{x}_n, \mathbf{v}_k))}{\sum_{k'=1}^{K} \exp(-d(\mathbf{x}_n, \mathbf{v}_{k'}))}
+
+The algorithm works by solving an optimization problem that balances the trade-off between
+classification accuracy, group and individual fairness, and reconstruction error. The objective
+function is thus defined as a weighted sum of three terms:
+
+.. math::
+
+    \lambda_x \times L_x + \lambda_y \times L_y + \lambda_z \times L_z
+
+where:
+
+:math:`L_x` is the reconstruction error term that writes as:
+
+.. math::
+
+    L_x = \frac{1}{N} \sum_{n=1}^{N} \| \mathbf{x}_n - \hat{\mathbf{x}}_n \|_2^2
+
+:math:`L_y` is the classification error term that is equal to the log loss:
+
+.. math::
+
+    L_y = -\frac{1}{N} \sum_{n=1}^{N} y_n \log(\hat{y}_n) + (1-y_n) \log(1-\hat{y}_n)
+
+:math:`L_z` is the demographic parity difference's approximation term that is defined as:
+
+.. math::
+
+    L_z = \frac{1}{K \times \binom{G}{2}} \sum_{k=1}^{K} \sum_{g < g'} \left| M_{gk} - M_{g'k} \right|
+
+where :math:`1\leq g, g'\leq G` are the indices of the groups in the sensitive features and
+:math:`M_{gk}` is the average of the entries of the transformation matrix :math:`\mathbf{M}`
+for group :math:`g` and prototype :math:`k`.
+
+
+
+
+In the example below, we use the `Adult Income <https://archive.ics.uci.edu/ml/datasets/adult>`_
+dataset to demonstrate the :code:`PrototypedRepresenter`. This dataset contains sensitive
+features such as race and sex. The goal is to transform the dataset so that the sensitive
+features have less influence on the predictions of a downstream model.
+
+.. doctest:: mitigation_preprocessing
+    :options:  +NORMALIZE_WHITESPACE
+
+    >>> from fairlearn.preprocessing import PrototypedRepresenter
+    >>> from fairlearn.datasets import fetch_adult
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import pandas as pd
+    >>> features_to_keep = ["fnlwgt", "capital-gain", "capital-loss", "hours-per-week", "age"]
+    >>> senstive_feature_id = "race_White"
+    >>> raw_data = fetch_adult().frame
+    >>> data, target = (
+    ...     raw_data[features_to_keep + ["race"]],
+    ...     raw_data["class"] == ">50K",
+    ... )
+    >>> data = pd.get_dummies(data)
+    >>> data, sensitive_features = data[features_to_keep], data[senstive_feature_id]
+    >>> X_train, X_test, y_train, y_test, sf_train, sf_test = train_test_split(
+    ...     data, target, sensitive_features, test_size=0.3, random_state=42
+    ... )
+    >>> scaler = StandardScaler()
+    >>> X_train = scaler.fit_transform(X_train)
+    >>> X_test = scaler.transform(X_test)
+    >>> frl = PrototypedRepresenter(n_prototypes=4, max_iter=10)
+    >>> frl.fit(X_train, y_train, sensitive_features=sf_train)
+    PrototypedRepresenter(max_iter=10, n_prototypes=4)
+    >>> X_train_transformed = frl.transform(X_train)
+    >>> X_test_transformed = frl.transform(X_test)
+    >>> y_hat = frl.predict(X_test)
+
+References
+----------
+
+.. footbibliography::
