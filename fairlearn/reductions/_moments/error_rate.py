@@ -29,13 +29,15 @@ class ErrorRate(ClassificationMoment):
       c_{FP} P[h(X)=1, Y=0] + c_{FN} P[h(X)=0, Y=1]
 
     where :math:`c_{FP}` and :math:`c_{FN}` are the costs of false positive
-    and false negative errors respectively. The standard misclassification
+    and false negative errors respectively. The default misclassification
     error corresponds to :math:`c_{FP}=c_{FN}=1.0`.
+
+    Read more in the :ref:`User Guide <error_rate>`.
 
     Parameters
     ----------
     costs : dict
-        The dictionary with keys :code:`'fp'` and :code:`'fn'` containing the
+        Dictionary with keys :code:`'fp'` and :code:`'fn'` containing the
         costs of false positives and false negatives. If none are provided
         costs of 1.0 are assumed.
     """
@@ -60,28 +62,49 @@ class ErrorRate(ClassificationMoment):
         else:
             raise ValueError(_MESSAGE_BAD_COSTS)
 
-    def load_data(self, X, y, *, sensitive_features, control_features=None):
-        """Load the specified data into the object."""
+    def load_data(self, X, y, *, sensitive_features):
+        """Load the specified data into the object.
+
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_features)
+            The feature array
+        y : array-like of shape (n_samples,)
+            The label vector
+        sensitive_features : array-like of shape (n_samples, n_sensitive_features)
+            The sensitive feature vector
+        """
         _, y_train, sf_train, _ = _validate_and_reformat_input(
             X,
             y,
             enforce_binary_labels=True,
             sensitive_features=sensitive_features,
-            control_features=control_features,
         )
-        # The following uses X  so that the estimators get X untouched
+        # The following uses X so that the estimators get X untouched
         super().load_data(X, y_train, sensitive_features=sf_train)
         self.index = [_ALL]
 
-    def gamma(self, predictor) -> pd.Series:
-        """Return the gamma values for the given predictor."""
-        pred = predictor(self.X)
-        if isinstance(pred, np.ndarray):
+    def gamma(self, predictor):
+        """Calculate the degree to which constraints are currently violated by the
+        predictor. The gamma value is normalised by the number of samples.
+
+        Parameters
+        ----------
+        predictor : func
+            bound function returning predictions
+
+        Returns
+        -------
+        error : :class:`pandas.Series`
+            gamma value for the predictor
+        """
+        y_pred = predictor(self.X)
+        if isinstance(y_pred, np.ndarray):
             # TensorFlow is returning an (n,1) array, which results
             # in the subtraction in the 'error =' line generating an
             # (n,n) array
-            pred = np.squeeze(pred)
-        signed_errors = self.tags[_LABEL] - pred
+            y_pred = np.squeeze(y_pred)
+        signed_errors = self.tags[_LABEL] - y_pred
         total_fn_cost = np.sum(signed_errors[signed_errors > 0] * self.fn_cost)
         total_fp_cost = np.sum(-signed_errors[signed_errors < 0] * self.fp_cost)
         error_value = (total_fn_cost + total_fp_cost) / self.total_samples

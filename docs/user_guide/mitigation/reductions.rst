@@ -194,7 +194,7 @@ the predicted labels.
     ...                                      y_pred=y_pred,
     ...                                      sensitive_features=pd.Series(sensitive_features, name="SF 0"))
     >>> selection_rate_summary.overall.item()
-        0.4
+    0.4
     >>> selection_rate_summary.by_group
     SF 0
     a    0.6
@@ -351,6 +351,70 @@ and false positive rate.
                    b           0.2380...
     dtype: float64
 
+
+.. _error_rate:
+
+Error Rate
+~~~~~~~~~~
+
+We can use the :class:`ErrorRate` either to measure performance of a trained model that does or
+does not take sensitive features into account, or as an addition to the
+objective function during the training of a fairness aware model.
+
+To measure the ErrorRate in respect to a trained estimator we use its :code:`gamma` method:
+
+.. doctest:: mitigation_reductions
+
+    >>> from fairlearn.reductions import ErrorRate
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42) 
+    >>> X, y = make_classification(n_features=10, class_sep=0.1, random_state=42)
+    >>> X[:, -1] = rng.integers(0, 2, size=(X.shape[0],)) # defining the sensitive feature
+    >>> sensitive_features = X[:, -1]
+    >>> classifier = LogisticRegression().fit(X, y)
+    >>> costs = {"fp":0.1, "fn":0.9}
+    >>> errorrate = ErrorRate(costs=costs)
+    >>> errorrate.load_data(X, y, sensitive_features=sensitive_features)
+    >>> errorrate.gamma(classifier.predict)
+    all    0.139
+    dtype: float64
+
+
+Using :class:`ErrorRate` as part of a reductions approach for fairness mitigation is equivalent
+to a cost-sensitive classification problem.
+
+.. doctest:: mitigation_reductions
+
+    >>> from fairlearn.reductions import ErrorRate, EqualizedOdds, ExponentiatedGradient
+    >>> from fairlearn.metrics import MetricFrame
+    >>> from sklearn.metrics import accuracy_score
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42) 
+    >>> X, y = make_classification(n_features=10, class_sep=0.1, random_state=42)
+    >>> X[:, -1] = rng.integers(0, 2, size=(X.shape[0],)) # defining the sensitive feature
+    >>> sensitive_features = X[:, -1]
+    >>> objective = ErrorRate(costs={"fp":0.1, "fn":0.9})
+    >>> constraint = EqualizedOdds(difference_bound=0.01)
+    >>> classifier = LogisticRegression()
+    >>> mitigator = ExponentiatedGradient(classifier, constraint, objective=objective)
+    >>> X_train, X_test, y_train, y_test, sensitive_train, sensitive_test = train_test_split(
+    ... X, y, sensitive_features, test_size=0.33, random_state=42)
+    >>> mitigator.fit(X_train, y_train, sensitive_features=sensitive_train) # doctest: +ELLIPSIS
+    ExponentiatedGradient(...)
+    >>> y_pred = mitigator.predict(X_test)
+    >>> mf_mitigated = MetricFrame(metrics=accuracy_score, y_true=y_test, y_pred=y_pred, sensitive_features=sensitive_test)
+    >>> mf_mitigated.overall.item()
+    0.5151515151515151
+    >>> mf_mitigated.by_group
+    sensitive_feature_0
+    0.0    0.611111
+    1.0    0.400000
+    Name: accuracy_score, dtype: float64
+
+
 .. _error_rate_parity:
 
 Error Rate Parity
@@ -375,6 +439,10 @@ the overall error rate by more than the value of :code:`difference_bound`.
 
     >>> from fairlearn.reductions import ErrorRateParity
     >>> from sklearn.metrics import accuracy_score
+    >>> X                  = np.array([[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]])
+    >>> y_true             = np.array([ 1 ,  1 ,  1 ,  1 ,  1,   1 ,  1 ,  0 ,  0 ,  0 ])
+    >>> y_pred             = np.array([ 1 ,  1 ,  1 ,  1 ,  0,   0 ,  0 ,  1 ,  0 ,  0 ])
+    >>> sensitive_features = np.array(["a", "b", "a", "a", "b", "a", "b", "b", "a", "b"])
     >>> accuracy_summary = MetricFrame(metrics=accuracy_score,
     ...                                y_true=y_true,
     ...                                y_pred=y_pred,
