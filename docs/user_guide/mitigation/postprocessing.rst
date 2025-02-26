@@ -448,6 +448,85 @@ knows what they are doing. Not every machine learning package adheres to
 scikit-learn's convention of setting all members with trailing underscore
 during :code:`fit()`, so this is unfortunately an imperfect check.
 
+.. _relabeling:
+
+Relabeling 
+^^^^^^^^^^
+
+The goal of this approach is to find the subset of leaves that can be relabeled
+in order to reduce the discrimination of the classifier while minimizing the loss
+of accuracy.
+
+We could represent a dataset and a leaf by a contingency table like these:
+
+Dataset
+
++--------------+-------+-------+----+
+| Class   ->   |  "-"  |  "+"  |    |
++--------------+-------+-------+----+
+| Predict ->   |  -/+  |  -/+  |    |
++--------------+-------+-------+----+
+| B=0          | U1/U2 | V1/V2 | b  |
++--------------+-------+-------+----+
+| B=1          | W1/W2 | X1/X2 | nb |
++--------------+-------+-------+----+
+|              | N1/N2 | P1/P2 | 1  |
++--------------+-------+-------+----+
+
+Leaf
+
++--------------+-----+-----+----+
+|              | "-" | "+" |    |
++--------------+-----+-----+----+
+| B=0          |  u  |  v  | b  |
++--------------+-----+-----+----+
+| B=1          |  w  |  x  | nb |
++--------------+-----+-----+----+
+|              |  n  |  p  | 1  |
++--------------+-----+-----+----+
+
+To calculate the accuracy and discrimination of a tree before relabeling we can use the
+following formulas:
+
+.. math::
+
+   acc_T = N_1 + P_2
+   
+   disc_T = \frac{W_2 + X_2}{nb} - \frac{U_2 + V_2}{b}
+   
+We can calculate the effect of relabeling on the tree with the following formulas:
+
++ If p>n, the label changes from + to - and the difference is given by:
+
+.. math::
+
+   \Delta acc_l = n - p
+
+   \Delta disc_T = \frac{u + v}{b} - \frac{w + x}{nb}
+   
++ Else if p<n, the label changes from - to + and the difference is given by:
+
+.. math::
+
+   \Delta acc_l = p - n
+
+   \Delta disc_T = - \frac{u + v}{b} + \frac{w + x}{nb}
+
+The first step is to calculate for each leaf the gain in accuracy and discrimination
+brought by relabeling and to keep only the leaves whose relabeling effect will reduce
+the discrimination. It's computed in the :code:`get_leaves_candidates` function.
+
+Then, from this set, we will
+select an optimal subset of leaves that will reduce the discrimination below the
+desired threshold by minimizing the loss of accuracy. This step is done in
+the :code:`leaves_to_relabel` function.
+
+After, we have to relabel all leaves. To relabel one leave we can call
+the :code:`browse_and_relab` function.
+
+But more simply to relabel a tree you just have to call the :code:`relabeling` function.
+
+
 
 .. topic:: References
 
