@@ -62,7 +62,6 @@ true positive rate parity as the fairness constraint.
     >>> from sklearn.preprocessing import OneHotEncoder, StandardScaler
     >>> from fairlearn.datasets import fetch_diabetes_hospital
     >>> from fairlearn.postprocessing import ThresholdOptimizer, plot_threshold_optimizer
-    >>> from fairlearn.reductions import DemographicParity, ExponentiatedGradient
     >>> data = fetch_diabetes_hospital(as_frame=True)
     >>> # Drop 3 rows of Unknown gender since it's not representative of that group.
     >>> # In a real application, this would be a red flag to investigate data collection.
@@ -176,6 +175,39 @@ the probability to predict label 1:
   - if the score is above :math:`0.104` predict 1
   - if the score is between :math:`0.104` and :math:`0.099` predict 1 with
     probability :math:`0.002`
+
+The :code:`ThresholdOptimizer`` can also introduce a degree of tolerance in the fairness constraint
+(except for :code:`equalized_odds`). This means that the user can relax the strict equality
+requirement of the fairness criterion across all sensitive groups. Instead, the objective will be
+optimized under the condition that the maximum discrepancy between any two sensitive groups remains
+within a specified tolerance :code:`tol`.
+
+In the example below, we examine how the outcome changes when setting a tolerance of
+:code:`tol=0.2`:
+
+.. plot::
+   :context: close-figs
+   :format: doctest
+
+    >>> threshold_optimizer = ThresholdOptimizer(
+    ...     estimator=pipeline,
+    ...     constraints="true_positive_rate_parity",
+    ...     objective="balanced_accuracy_score",
+    ...     predict_method="predict_proba",
+    ...     prefit=False,
+    ...     tol=0.2,
+    ... )
+    >>> _ = threshold_optimizer.fit(X_train, y_train, sensitive_features=A_train)
+    >>> true_positive_rate_per_group = threshold_optimizer._x_best_per_group
+    >>> print({group: f"{rate:.2f}" for group, rate in true_positive_rate_per_group.items()})
+    {'Female': '0.70', 'Male': '0.63'}
+    >>> print(f"{threshold_optimizer._y_best:5f}")
+    0.604667
+    >>> plot_threshold_optimizer(threshold_optimizer)
+
+Notice that the :code:`true_positive_rate` differs between the Male and Female groups, yet the
+discrepancy remains within the specified tolerance level.
+
 
 .. note::
 

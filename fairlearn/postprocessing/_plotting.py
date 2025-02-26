@@ -132,15 +132,33 @@ def plot_threshold_optimizer(threshold_optimizer: ThresholdOptimizer, ax=None, s
             "$P[\\hat{Y}=1|Y=1]$",
         )
     else:
-        _plot_overall_tradeoff_curve(ax, threshold_optimizer._overall_tradeoff_curve)
-        _plot_solution(
-            ax,
-            threshold_optimizer._x_best,
-            None,
-            "solution",
-            threshold_optimizer.x_metric_,
-            threshold_optimizer.y_metric_,
-        )
+        if threshold_optimizer.tol:
+            _plot_solution_with_tol(threshold_optimizer, ax)
+
+        else:
+            _plot_overall_tradeoff_curve(ax, threshold_optimizer._overall_tradeoff_curve)
+            _plot_solution(
+                ax,
+                threshold_optimizer._x_best,
+                None,
+                "solution",
+                threshold_optimizer.x_metric_,
+                threshold_optimizer.y_metric_,
+            )
 
     if show_plot:
         plt.show()
+
+
+def _plot_solution_with_tol(threshold_optimizer: ThresholdOptimizer, ax):
+    for sensitive_feature_value, x_best in threshold_optimizer._x_best_per_group.items():
+        color = _get_debug_color(sensitive_feature_value)
+        ax.axvline(
+            x=x_best,
+            label=f"constraint (sensitive feature = {sensitive_feature_value})",
+            ls="--",
+            c=color,
+        )
+        ax.legend()
+        ax.set_xlabel(threshold_optimizer.x_metric_)
+        ax.set_ylabel(threshold_optimizer.y_metric_)

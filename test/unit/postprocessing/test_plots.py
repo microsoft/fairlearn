@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation and Fairlearn contributors.
 # Licensed under the MIT License.
+from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError
 
@@ -22,13 +23,14 @@ a typical pytest command without extra options) or to actually compare the
 generated images with the baseline plots (using pytest --mpl)."""
 
 
-def _fit_and_plot(constraints, plotting_data):
+def _fit_and_plot(constraints, plotting_data, tol: float | None = None):
     import matplotlib.pyplot as plt
 
     adjusted_predictor = ThresholdOptimizer(
         estimator=ExamplePredictor(scores_ex),
         constraints=constraints,
         predict_method="predict",
+        tol=tol,
     )
     adjusted_predictor.fit(
         plotting_data.X,
@@ -75,3 +77,7 @@ class TestPlots:
     @pytest.mark.mpl_image_compare(filename="post_processing_demographic_parity_ex3.png")
     def test_plot_demographic_parity_ex3(self):
         return _fit_and_plot("demographic_parity", _data_ex3)
+
+    @pytest.mark.mpl_image_compare(filename="post_processing_demographic_parity_tol.png")
+    def test_plot_demographic_parity_tol(self):
+        return _fit_and_plot("demographic_parity", _data_ex1, tol=0.1)
