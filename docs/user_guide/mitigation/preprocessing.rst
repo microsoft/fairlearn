@@ -139,3 +139,96 @@ we would expect with :math:`\alpha=0.5`.
 .. figure:: ../../auto_examples/images/sphx_glr_plot_correlationremover_before_after_003.png
     :align: center
     :target: ../../auto_examples/plot_correlationremover_before_after.html
+
+
+Reweighing
+----------
+Another approach to remove discrimination from the data set is to weight each data entry
+such that there is a discrimination free balance, as presented in Section 5.2 of
+:footcite:`kamiran2012`. The algorithm reduces the discrimination to 0
+while maintaining the overall positive class probability.
+
+Given a dataset :math:`D`, sensitive features :math:`S`, and classification targets :math:`Y`.
+If the dataset :math:`D` is unbiased, the class probabilities are statistically
+independent of the sensitive features, so for any sensitive feature :math:`s \in S` and target :math:`y \in Y`:
+
+.. math::
+    P_{\text{indep}}[X(S)=s \land X(Y) = y] = \frac{|\{X \in D \mid X(S) = s\}|}{|D|} \times \frac{|\{X \in D \mid X(Y) = y\}|}{|D|}.
+
+However, a dataset's observed class probabilities,
+
+.. math::
+    P_{\text{obs}}[X(S)=s ~\land~ X(Y) = y] = \frac{|\{X \in D \mid X(S) = s ~\land~ X(Y) = y\}|}{|D|},
+
+are often different of :math:`P_{\text{ind}}`, leading to under or overrepresentation of specific
+sensitive groups. To compensate for this bias, the algorithm as presented in Section 5.2 of
+:footcite:`kamiran2012` applies a weight :math:`W(X)` to each data point :math:`X \in D` of:
+
+.. math::
+    W(X) = \frac{P_{\text{indep}}[X(S)=S \land X(Y) = Y]}{P_{\text{obs}}[X(S)=S ~\land~ X(Y) = Y]}
+
+In the following example, we firstly train a simple Bernoulli estimator, and set a
+baseline for the accuracy of this estimator. In particular, we measure the
+disparity between the sexes.
+
+.. doctest:: without_reweighing
+    :options:  +NORMALIZE_WHITESPACE
+
+    >>> from fairlearn.metrics import MetricFrame
+    >>> from fairlearn.preprocessing import Reweighing
+    >>> from sklearn.datasets import fetch_openml
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> import pandas as pd
+    >>> data = fetch_openml(data_id=1590, as_frame=True)
+    >>> X = pd.get_dummies(data.data)
+    >>> Y = (data.target == ">50K") * 1
+    >>> A = (data.data["sex"] == "Male") * 1
+    >>> est = BernoulliNB()
+    >>> est.fit(X, Y);
+    >>> pred_original = est.predict(X)
+
+    >>> diff_original = MetricFrame(
+    ...     metrics=accuracy_score,
+    ...     y_true=Y,
+    ...     y_pred=pred_original,
+    ...     sensitive_features=A,
+    ... ).difference()
+    >>> print("%.3f" % diff_original)
+    0.231
+
+This is quite a significant difference. Now, by applying the
+reweighing preprocessing algorithm, we can see this disparity
+decreases.
+
+.. doctest:: with_reweighing
+    :options:  +NORMALIZE_WHITESPACE
+
+    >>> from fairlearn.metrics import MetricFrame
+    >>> from fairlearn.preprocessing import Reweighing
+    >>> from sklearn.datasets import fetch_openml
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> import pandas as pd
+    >>> data = fetch_openml(data_id=1590, as_frame=True)
+    >>> X = pd.get_dummies(data.data)
+    >>> Y = (data.target == ">50K") * 1
+    >>> A = (data.data["sex"] == "Male") * 1
+    >>> est = BernoulliNB()
+    >>> metaest = Reweighing(est, passthrough_sensitive_features=False)
+    >>> metaest.fit(X, Y, sensitive_features=A);
+    >>> pred_mitigated = est.predict(X)
+
+    >>> diff_mitigated = MetricFrame(
+    ...     metrics=accuracy_score,
+    ...     y_true=Y,
+    ...     y_pred=pred_mitigated,
+    ...     sensitive_features=A,
+    ... ).difference()
+    >>> print("%.3f" % diff_mitigated)
+    0.142
+
+References
+----------
+
+.. footbibliography::

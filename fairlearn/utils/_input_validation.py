@@ -156,6 +156,15 @@ def _merge_columns(feature_columns: np.ndarray) -> np.ndarray:
                 type(feature_columns).__name__
             )
         )
+    if feature_columns.ndim > 2:
+        raise ValueError(
+            "Received %d-dimensional numpy.ndarray." % feature_columns.ndim
+        )
+    # avoid merging columns if it's only 1 column
+    if (feature_columns.ndim == 2 and feature_columns.shape[1] == 1) or (
+        feature_columns.ndim == 1 and feature_columns.shape[0] == 1
+    ):
+        return feature_columns
     return (
         pd.DataFrame(feature_columns)
         .apply(
