@@ -32,7 +32,9 @@ def validate_data(estimator, X, **kwargs):  # pragma: no cover
         return validate_data(estimator, X, **kwargs)
     except ImportError:
         # sklearn version < 1.6
-        return estimator._validate_data(X, **kwargs)
+        ensure_all_finite = kwargs.pop("ensure_all_finite", True)
+
+        return estimator._validate_data(X, **kwargs, force_all_finite=ensure_all_finite)
 
 
 def check_array(X, **kwargs):  # pragma: no cover
