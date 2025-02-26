@@ -3,8 +3,8 @@
 
 from collections.abc import Iterable
 
+import narwhals.stable.v1 as nw
 import numpy as np
-import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
@@ -96,9 +96,10 @@ class CorrelationRemover(TransformerMixin, BaseEstimator):
 
     def _create_lookup(self, X):
         """Create a lookup to handle column names correctly."""
-        if isinstance(X, pd.DataFrame):
+        X = nw.from_native(X, pass_through=True, eager_only=True)
+        if isinstance(X, nw.DataFrame):
             self.lookup_ = {c: i for i, c in enumerate(X.columns)}
-            return X.values
+            return X.to_numpy()
         # correctly handle a 1d input
         X = validate_data(self, X, ensure_2d=False, ensure_min_samples=0)
         if len(X.shape) == 1:
@@ -153,7 +154,8 @@ class CorrelationRemover(TransformerMixin, BaseEstimator):
 
     def _check_sensitive_features_in_X(self, X) -> None:
         """Check if the sensitive features are in X."""
-        if isinstance(X, pd.DataFrame):
+        X = nw.from_native(X, pass_through=True, eager_only=True)
+        if isinstance(X, nw.DataFrame):
             missing_columns = [c for c in self.sensitive_feature_ids if c not in X.columns]
         else:
             X = validate_data(self, X, ensure_2d=False, ensure_min_samples=0)
