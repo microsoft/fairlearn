@@ -63,8 +63,8 @@ def _validate_and_reformat_input(
         If true, sensitive_features must be provided to the call to this function.
         This is the default setting.
     enforce_binary_labels : bool
-        If True raise exception if there are more than two distinct
-        values in the `y` data; default False
+        If True, raise an exception if `y` contains values other than 0 and 1.
+        Default is False.
 
     Returns
     -------
